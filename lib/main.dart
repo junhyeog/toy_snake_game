@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -46,8 +48,11 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _score = 0;
   int _scoreHigh = 0;
-  int direction = 0; // 0~4: 상하좌우
-  var directionScore = [0, 0, 0, 0]; // 상하좌우 점수
+  int _direction = 0; // 0~4: 상하좌우
+  var _directionScore = [0, 0, 0, 0]; // 상하좌우 터치 개수
+  // Point _apple = Point(5, 5);
+  // var _snake = new List<Point>();
+  // int _gameState = 0; // 0=시작 , 1=진행중, 2=게임오버
 
   double mapSize = 330.0;
 
@@ -63,6 +68,87 @@ class _MyHomePageState extends State<MyHomePage> {
       _scoreHigh = 0;
       _score = 0;
     });
+  }
+
+  Widget directionButton() {
+    var child;
+    if (_direction == 0 || _direction == 1) {
+      child = Container(
+        height: mapSize,
+        width: mapSize,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              height: mapSize,
+              width: mapSize / 2,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (tapUpDetails) {
+                  setState(() {
+                    _directionScore[2]++;
+                    _direction = 2;
+                  });
+                },
+              ),
+            ),
+            Container(
+              height: mapSize,
+              width: mapSize / 2,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (tapUpDetails) {
+                  setState(() {
+                    _directionScore[3]++;
+                    _direction = 3;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (_direction == 2 || _direction == 3) {
+      child = Container(
+        height: mapSize,
+        width: mapSize,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              height: mapSize / 2,
+              width: mapSize,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (tapUpDetails) {
+                  setState(() {
+                    _directionScore[0]++;
+                    _direction = 0;
+                  });
+                },
+              ),
+            ),
+            Container(
+              height: mapSize / 2,
+              width: mapSize,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (tapUpDetails) {
+                  setState(() {
+                    _directionScore[1]++;
+                    _direction = 1;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      child = Container(
+          height: mapSize, width: mapSize, child: Text('direction error!'));
+    }
+    return child;
   }
 
   @override
@@ -103,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               // direction확인용 테스트 코드
               Text(
-                '$direction' + ' ' + '$directionScore',
+                '$_direction' + ' ' + '$_directionScore',
                 style: Theme.of(context).textTheme.display1,
               ),
             ],
@@ -115,10 +201,11 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 Stack(children: [
                   Container(
-                    width: mapSize,
                     height: mapSize,
+                    width: mapSize,
                     child: Image.asset('images/background.png'),
                   ),
+                  directionButton(),
                 ]),
               ],
             ),
