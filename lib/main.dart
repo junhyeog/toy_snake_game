@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Toy_snake_game',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Snake Game'),
     );
   }
 }
@@ -49,10 +50,10 @@ class _MyHomePageState extends State<MyHomePage> {
   int _score = 0;
   int _scoreHigh = 0;
   int _direction = 3; // 0~4: 상하좌우
-  var _directionScore = [0, 0, 0, 0]; // 상하좌우 터치 개수
   Point _apple = Point(9, 5);
   var _snake = new List<Point>();
   int _gameState = 0; // 0=시작 , 1=진행중, 2=게임오버
+  Timer timer;
 
   final double mapSize = 330.0;
 
@@ -69,6 +70,99 @@ class _MyHomePageState extends State<MyHomePage> {
       _scoreHigh = 0;
       _score = 0;
       _gameState = 0;
+      timer.cancel();
+    });
+  }
+
+  void start() {
+    setState(() {
+      _gameState = 1;
+    });
+    timer = new Timer.periodic(new Duration(milliseconds: 500), onTimeTick);
+  }
+
+  void end() {
+    setState(() {
+      _gameState = 0;
+      _score = 0;
+      timer.cancel();
+    });
+  }
+
+  void onTimeTick(Timer timer) {
+    setState(() {
+      _snake.insert(0, getLatestSnake());
+      _snake.removeLast();
+    });
+
+    var currentHeadPos = _snake.first;
+    if (currentHeadPos.x < 0 ||
+        currentHeadPos.y < 0 ||
+        currentHeadPos.x > 11 ||
+        currentHeadPos.y > 11) {
+      setState(() {
+        _gameState = 2;
+      });
+      return;
+    }
+    if (_snake.contains(getLatestSnake())) {
+      setState(() {
+        _gameState = 2;
+      });
+      return;
+    }
+
+    if (_snake.first.x == _apple.x && _snake.first.y == _apple.y) {
+      _incrementScore();
+      generateApple();
+      setState(() {
+        _snake.insert(0, getLatestSnake());
+      });
+    }
+  }
+
+  Point getLatestSnake() {
+    var newHeadPos;
+
+    switch (_direction) {
+      case 2:
+        var currentHeadPos = _snake.first;
+        newHeadPos = Point(currentHeadPos.x - 1, currentHeadPos.y);
+        break;
+
+      case 3:
+        var currentHeadPos = _snake.first;
+        newHeadPos = Point(currentHeadPos.x + 1, currentHeadPos.y);
+        break;
+
+      case 0:
+        var currentHeadPos = _snake.first;
+        newHeadPos = Point(currentHeadPos.x, currentHeadPos.y - 1);
+        break;
+
+      case 1:
+        var currentHeadPos = _snake.first;
+        newHeadPos = Point(currentHeadPos.x, currentHeadPos.y + 1);
+        break;
+    }
+
+    return newHeadPos;
+  }
+
+  void generateApple() {
+    setState(() {
+      Random rng = new Random();
+      var nextX = rng.nextInt(9) + 1;
+      var nextY = rng.nextInt(9) + 1;
+      var newApple = Point(nextX, nextY);
+      while (_snake.contains(newApple)) {
+        nextX = rng.nextInt(11);
+        nextY = rng.nextInt(11);
+        newApple = Point(nextX, nextY);
+      }
+      setState(() {
+        _apple = newApple;
+      });
     });
   }
 
@@ -77,7 +171,21 @@ class _MyHomePageState extends State<MyHomePage> {
       width: mapSize / 11,
       height: mapSize / 11,
       decoration: new BoxDecoration(
-        color: const Color(0xFFFF0000),
+        color: Colors.blue,
+        border: Border.all(width: 1.5, color: Colors.lightBlueAccent),
+        shape: BoxShape.rectangle,
+      ),
+    );
+    return child;
+  }
+
+  Widget apple() {
+    var child = Container(
+      width: mapSize / 11,
+      height: mapSize / 11,
+      decoration: new BoxDecoration(
+        border: Border.all(width: 2.0, color: Colors.redAccent),
+        color: Colors.red,
         shape: BoxShape.rectangle,
       ),
     );
@@ -100,12 +208,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 behavior: HitTestBehavior.opaque,
                 onTapUp: (tapUpDetails) {
                   setState(() {
-                    _directionScore[2]++;
-                    _direction = 2;
                     if (_gameState == 0) {
-                      setState(() {
-                        _gameState = 1;
-                      });
+                      start();
+                    } else if (_gameState == 2) {
+                      end();
+                    } else {
+                      _direction = 2;
                     }
                   });
                 },
@@ -118,12 +226,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 behavior: HitTestBehavior.opaque,
                 onTapUp: (tapUpDetails) {
                   setState(() {
-                    _directionScore[3]++;
-                    _direction = 3;
                     if (_gameState == 0) {
-                      setState(() {
-                        _gameState = 1;
-                      });
+                      start();
+                    } else if (_gameState == 2) {
+                      end();
+                    } else {
+                      _direction = 3;
                     }
                   });
                 },
@@ -146,12 +254,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 behavior: HitTestBehavior.opaque,
                 onTapUp: (tapUpDetails) {
                   setState(() {
-                    _directionScore[0]++;
-                    _direction = 0;
                     if (_gameState == 0) {
-                      setState(() {
-                        _gameState = 1;
-                      });
+                      start();
+                    } else if (_gameState == 2) {
+                      end();
+                    } else {
+                      _direction = 0;
                     }
                   });
                 },
@@ -164,12 +272,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 behavior: HitTestBehavior.opaque,
                 onTapUp: (tapUpDetails) {
                   setState(() {
-                    _directionScore[1]++;
-                    _direction = 1;
                     if (_gameState == 0) {
-                      setState(() {
-                        _gameState = 1;
-                      });
+                      start();
+                    } else if (_gameState == 2) {
+                      end();
+                    } else {
+                      _direction = 1;
                     }
                   });
                 },
@@ -188,10 +296,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget childByGameState() {
     if (_gameState == 0) {
       setState(() {
-        _snake = [Point(2, 5), Point(3, 5), Point(4, 5)];
+        _snake = [Point(4, 5), Point(3, 5), Point(2, 5)];
         _score = 0;
-        _direction = 2;
-        _apple = Point(9, 5);
+        _direction = 3;
+        _apple = Point(8, 5);
       });
       return Stack(
         children: [
@@ -206,6 +314,10 @@ class _MyHomePageState extends State<MyHomePage> {
             width: mapSize,
             child: Center(child: Text('Tap to Start!')),
           ),
+          // Positioned(
+          //     child: apple(),
+          //     left: _apple.x * mapSize / 11,
+          //     top: _apple.y * mapSize / 11),
           directionButton(),
         ],
       );
@@ -238,11 +350,16 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           // 게임 상태에 따른 위젯
           for (var item in snakePositioned) item,
+          Positioned(
+              child: apple(),
+              left: _apple.x * mapSize / 11,
+              top: _apple.y * mapSize / 11),
           //조작 버튼
           directionButton(),
         ],
       );
     } else {
+      timer.cancel();
       return Stack(
         children: [
           Container(
@@ -282,25 +399,12 @@ class _MyHomePageState extends State<MyHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              RaisedButton(
-                child: Text(
-                  "Add",
-                  style: TextStyle(color: Colors.white),
-                ),
-                color: Colors.red,
-                onPressed: _incrementScore,
-              ),
               Text(
-                '$_score',
+                'Score: $_score',
                 style: Theme.of(context).textTheme.display1,
               ),
               Text(
-                '$_scoreHigh',
-                style: Theme.of(context).textTheme.display1,
-              ),
-              // direction확인용 테스트 코드
-              Text(
-                '$_direction' + ' ' + '$_directionScore',
+                'Record: $_scoreHigh',
                 style: Theme.of(context).textTheme.display1,
               ),
             ],
