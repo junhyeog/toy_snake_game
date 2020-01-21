@@ -48,14 +48,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _score = 0;
   int _scoreHigh = 0;
-  int _direction = 0; // 0~4: 상하좌우
+  int _direction = 3; // 0~4: 상하좌우
   var _directionScore = [0, 0, 0, 0]; // 상하좌우 터치 개수
-  // Point _apple = Point(5, 5);
-  // var _snake = new List<Point>();
-  // int _gameState = 0; // 0=시작 , 1=진행중, 2=게임오버
+  Point _apple = Point(9, 5);
+  var _snake = new List<Point>();
+  int _gameState = 0; // 0=시작 , 1=진행중, 2=게임오버
 
-  double mapSize = 330.0;
+  final double mapSize = 330.0;
 
+  // functions
   void _incrementScore() {
     setState(() {
       _score++;
@@ -67,7 +68,20 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _scoreHigh = 0;
       _score = 0;
+      _gameState = 0;
     });
+  }
+
+  Widget snakeJoint() {
+    var child = Container(
+      width: mapSize / 11,
+      height: mapSize / 11,
+      decoration: new BoxDecoration(
+        color: const Color(0xFFFF0000),
+        shape: BoxShape.rectangle,
+      ),
+    );
+    return child;
   }
 
   Widget directionButton() {
@@ -88,6 +102,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _directionScore[2]++;
                     _direction = 2;
+                    if (_gameState == 0) {
+                      setState(() {
+                        _gameState = 1;
+                      });
+                    }
                   });
                 },
               ),
@@ -101,6 +120,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _directionScore[3]++;
                     _direction = 3;
+                    if (_gameState == 0) {
+                      setState(() {
+                        _gameState = 1;
+                      });
+                    }
                   });
                 },
               ),
@@ -124,6 +148,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _directionScore[0]++;
                     _direction = 0;
+                    if (_gameState == 0) {
+                      setState(() {
+                        _gameState = 1;
+                      });
+                    }
                   });
                 },
               ),
@@ -137,6 +166,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _directionScore[1]++;
                     _direction = 1;
+                    if (_gameState == 0) {
+                      setState(() {
+                        _gameState = 1;
+                      });
+                    }
                   });
                 },
               ),
@@ -149,6 +183,83 @@ class _MyHomePageState extends State<MyHomePage> {
           height: mapSize, width: mapSize, child: Text('direction error!'));
     }
     return child;
+  }
+
+  Widget childByGameState() {
+    if (_gameState == 0) {
+      setState(() {
+        _snake = [Point(2, 5), Point(3, 5), Point(4, 5)];
+        _score = 0;
+        _direction = 2;
+        _apple = Point(9, 5);
+      });
+      return Stack(
+        children: [
+          Container(
+            height: mapSize,
+            width: mapSize,
+            child: Image.asset('images/background.png'),
+          ),
+          // 게임 상태에 따른 위젯
+          Container(
+            height: mapSize,
+            width: mapSize,
+            child: Center(child: Text('Tap to Start!')),
+          ),
+          directionButton(),
+        ],
+      );
+    } else if (_gameState == 1) {
+      List<Positioned> snakePositioned = List();
+      _snake.forEach(
+        (p) {
+          snakePositioned.add(Positioned(
+              child: snakeJoint(),
+              left: p.x * mapSize / 11,
+              top: p.y * mapSize / 11));
+        },
+      );
+      // // 마지막 마디 추가
+      // // snakePositioned.add(
+      // //   Pointed(
+      // //     child: snakeJoint(),
+
+      // //   )
+      // // )
+      // child = snakePositioned.forEach((p) {
+      //   return p;
+      // });
+      return Stack(
+        children: [
+          Container(
+            height: mapSize,
+            width: mapSize,
+            child: Image.asset('images/background.png'),
+          ),
+          // 게임 상태에 따른 위젯
+          for (var item in snakePositioned) item,
+          //조작 버튼
+          directionButton(),
+        ],
+      );
+    } else {
+      return Stack(
+        children: [
+          Container(
+            height: mapSize,
+            width: mapSize,
+            child: Image.asset('images/background.png'),
+          ),
+          // 게임 상태에 따른 위젯
+          Container(
+            height: mapSize,
+            width: mapSize,
+            child: Center(child: Text('Game Over!')),
+          ),
+          directionButton(),
+        ],
+      );
+    }
   }
 
   @override
@@ -199,14 +310,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Stack(children: [
-                  Container(
-                    height: mapSize,
-                    width: mapSize,
-                    child: Image.asset('images/background.png'),
-                  ),
-                  directionButton(),
-                ]),
+                childByGameState(),
               ],
             ),
           ),
